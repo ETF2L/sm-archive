@@ -8,9 +8,9 @@
 # plugin with the spcomp of a pinned SourceMod build. It packs two archives
 # laid out like a game folder, SMArchive and the shims. For a pushed v* tag
 # it also publishes them as a GitHub release, after checking that the tag
-# matches the version in extension/src/version.h. The steps follow
-# server/Dockerfile. A separate job checks the SourcePawn files in scripting/
-# with pawncritic (sourcepawn-tools' SourcePawn Lint action).
+# matches the version in extension/src/version.h. A separate job checks the
+# SourcePawn files in scripting/ with pawncritic (sourcepawn-tools' SourcePawn
+# Lint action).
 
 name: CI
 

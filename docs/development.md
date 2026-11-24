@@ -37,12 +37,6 @@ with a fake `Pool::Runner`. Given a fixtures directory (`smarchive-tests-<arch> 
   encrypted zips and 7z; the tests unpack them and pack the same into `ours/<bits>/`, which `interop.py verify`
   unpacks with the tools.
 
-The end-to-end test runs on the test server, started from the project root with
-`docker compose -f server/compose.yaml up --build tf2` (32-bit) or
-`docker compose -f server/compose.yaml --profile x64 up --build tf2-x64` (64-bit; only one of the two runs at a
-time), then `python3 server/e2e/e2e.py [--port 27015] [--password tf2dev]`. It writes its files into `server/artest/`
-(`tf/artest/` on the server), drives the test plugins over RCON and checks the outputs on the host.
-
 ## Layout
 
 | Path | What |
@@ -54,7 +48,6 @@ time), then `python3 server/e2e/e2e.py [--port 27015] [--password tf2dev]`. It w
 | `extension/tests/` | The unit tests and fixtures. |
 | `vcpkg/` | The manifest, the overlay port `zlib` (zlib-ng in its zlib-compatible mode) and the triplets. |
 | `scripting/` | `smarchive.inc`, the companion plugin, the shims' includes. |
-| `server/` | Dockerfile, compose file, test plugins (`test-plugin/`), end-to-end test (`e2e/`) and its files (`artest/`). |
 
 Adding a codec: a value in `Codec`, an options struct in `codec.h` with its validation and names in `codec.cpp`, a file
 in `codecs/` with its `Transform`s (declared in `codecs/codecs.h`), its magic and file names in `detect.cpp`, its
@@ -63,7 +56,7 @@ tests. Files, memory, limits, progress and tar on top come with it.
 
 ## Updating the libraries
 
-Move `builtin-baseline` in `vcpkg/vcpkg.json` and `VCPKG_COMMIT` in `server/Dockerfile` to a newer vcpkg commit, copy
+Move `builtin-baseline` in `vcpkg/vcpkg.json` (CI reads it from there) to a newer vcpkg commit, copy
 that commit's `ports/zlib-ng/portfile.cmake` and version into `vcpkg/ports/zlib/` (keeping `set(ZLIB_COMPAT ON)`),
 build and run all tests.
 

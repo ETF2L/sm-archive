@@ -36,9 +36,9 @@ empty input fails with `ArchiveError_UnexpectedEOF`.
 | 7z | the methods libarchive reads | `Method` copy, deflate, bzip2, lzma1, lzma2 (default), ppmd; `Level` 0-9 (5) | `37 7a bc af 27 1c` |
 | RAR | RAR 4 and 5, solid too | never (the format is proprietary) | `Rar! 1a 07 00` and `Rar! 1a 07 01 00` |
 
-zip, 7z and RAR are read from files only, never through a codec, since reading them seeks. libarchive parses and
-writes the containers; the extraction itself, its checks and its limits are SMArchive's
-([ADR 0001](adr/0001-libarchive-parses-containers-only.md)). libarchive's 7z writer keeps its compressed data in a
+zip, 7z and RAR are read from files only, never through a codec, since reading them seeks. libarchive parses and writes
+the containers; the extraction itself, its checks and its limits are SMArchive's, so the safety against hostile archives
+does not depend on libarchive's flags and is tested in one place. libarchive's 7z writer keeps its compressed data in a
 file in the system's temp directory while it writes.
 
 Encrypted entries and archives (zip's ZipCrypto and AES, 7z's and RAR's encryption) are never decrypted; they fail

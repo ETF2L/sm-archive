@@ -2,11 +2,11 @@
 
 ## With the shims: plugins unchanged
 
-`sm-archive-shims-v<version>-linux.tar.gz` (or `dist-shims/`) holds `smbz2.ext.so` and `smbrotli.ext.so` for 32-bit and
-64-bit servers. Install SMArchive first, then copy the shims over the old files. Plugins compiled against `bzip2.inc`
-or `brotli.inc` load unchanged: they depend on these file names, and the shims register the same natives
-(`BZ2.CompressFile`, `BZ2.DecompressFile`, `BZ2.ErrorString`, `Brotli.CompressFile`, `Brotli.DecompressFile`,
-`Brotli.ErrorString`) with the same arguments, checks, callbacks and error values ([ADR 0003](adr/0003-binary-shims-for-smbz2-and-smbrotli.md)).
+`sm-archive-shims-v<version>-linux.tar.gz` holds `smbz2.ext.so` and `smbrotli.ext.so` for 32-bit and 64-bit servers.
+Install SMArchive first, then copy the shims over the old files. Plugins compiled against `bzip2.inc` or `brotli.inc`
+load unchanged: they depend on these file names, and the shims register the same natives (`BZ2.CompressFile`,
+`BZ2.DecompressFile`, `BZ2.ErrorString`, `Brotli.CompressFile`, `Brotli.DecompressFile`, `Brotli.ErrorString`) with the
+same arguments, checks, callbacks and error values.
 
 What stays as it was:
 
