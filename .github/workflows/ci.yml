@@ -1,0 +1,226 @@
+# Copyright 2026 ETF2L Contributors, Dave
+#
+# Builds SMArchive for Linux (x86 and x86_64) on every push, pull request and
+# manual run: the libraries with vcpkg at the commit vcpkg/vcpkg.json pins
+# (cached), the extension and the shims against a pinned SourceMod commit,
+# the unit tests on the hostile, RAR and interop fixtures for both
+# architectures, the interop check with the real tools, and the companion
+# plugin with the spcomp of a pinned SourceMod build. It packs two archives
+# laid out like a game folder, SMArchive and the shims. For a pushed v* tag
+# it also publishes them as a GitHub release, after checking that the tag
+# matches the version in extension/src/version.h. The steps follow
+# server/Dockerfile.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # The SourceMod commit (on 1.12-dev) the extension builds against, pinned
+  # like the libraries, so that a release is reproducible from its tag.
+  SOURCEMOD_COMMIT: 3808e21eb842d8598cc8351a341dcbe661d21b58
+  # The SourceMod build whose spcomp compiles the plugin.
+  SOURCEMOD_DROP: https://sm.alliedmods.net/smdrop/1.12/sourcemod-1.12.0-git7260-linux.tar.gz
+  # SMArchive's binaries may require at most this glibc version.
+  MAX_GLIBC: '2.35'
+
+jobs:
+  build:
+    name: Build (linux)
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -yq --no-install-recommends clang gcc-multilib g++-multilib curl zip unzip \
+            pkg-config gzip bzip2 xz-utils zstd lz4 brotli p7zip-full
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: smarchive
+
+      - name: Checkout SourceMod
+        uses: actions/checkout@v4
+        with:
+          repository: alliedmodders/sourcemod
+          ref: ${{ env.SOURCEMOD_COMMIT }}
+          path: sourcemod
+          submodules: recursive
+
+      - name: Find the pinned vcpkg commit
+        id: vcpkg
+        run: |
+          commit=$(python3 -c 'import json; print(json.load(open("smarchive/vcpkg/vcpkg.json"))["builtin-baseline"])')
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          ref: ${{ steps.vcpkg.outputs.commit }}
+          path: vcpkg
+
+      - name: Cache the vcpkg packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/vcpkg-archives
+          key: vcpkg-${{ hashFiles('smarchive/vcpkg/**') }}
+
+      - name: Build the libraries
+        run: |
+          mkdir -p ~/.cache/vcpkg-archives
+          export VCPKG_BINARY_SOURCES="clear;files,$HOME/.cache/vcpkg-archives,readwrite"
+          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
+          mkdir -p libs
+          for arch in x86 x64; do
+            ./vcpkg/vcpkg install --x-manifest-root=smarchive/vcpkg --triplet "$arch-linux-smarchive" \
+              --host-triplet x64-linux --x-install-root="libs-$arch" --clean-after-build
+            mv "libs-$arch/$arch-linux-smarchive" "libs/$arch"
+          done
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install AMBuild
+        run: pip install git+https://github.com/alliedmodders/ambuild
+
+      - name: Build
+        run: |
+          export CC=clang CXX=clang++
+          mkdir -p smarchive/build
+          cd smarchive/build
+          python ../extension/configure.py --enable-optimize --targets=x86,x86_64 --sm-path=../../sourcemod \
+            --libs-path=../../libs
+          ambuild
+
+      - name: Run the unit and interop tests
+        run: |
+          fixtures="$RUNNER_TEMP/fixtures"
+          python3 -I smarchive/extension/tests/fixtures/hostile.py "$fixtures"
+          python3 -I smarchive/extension/tests/fixtures/interop.py prepare "$fixtures"
+          cp -r smarchive/extension/tests/fixtures/rar "$fixtures/rar"
+          for arch in x86 x86_64; do
+            echo "Unit tests for $arch:"
+            "smarchive/build/tests/smarchive-tests-$arch/linux-$arch/smarchive-tests-$arch" "$fixtures"
+          done
+          python3 -I smarchive/extension/tests/fixtures/interop.py verify "$fixtures"
+
+      - name: Check the binaries' exports and glibc version
+        run: |
+          for binary in $(find smarchive/build -name '*.ext.so'); do
+            exported=$(nm -D --defined-only "$binary" | awk '{print $3}' | grep -v '^$' | sort | tr '\n' ' ')
+            if [ "$exported" != "GetSMExtAPI " ]; then
+              echo "::error::$binary exports $exported"
+              exit 1
+            fi
+            needed=$(objdump -T "$binary" | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -uV | tail -1)
+            echo "$binary needs glibc $needed"
+            if [ "$(printf '%s\n%s\n' "$needed" "$MAX_GLIBC" | sort -V | tail -1)" != "$MAX_GLIBC" ]; then
+              echo "::error::$binary needs glibc $needed, more than $MAX_GLIBC"
+              exit 1
+            fi
+          done
+
+      - name: Compile the plugin
+        run: |
+          curl -fsSL -o sourcemod.tar.gz "$SOURCEMOD_DROP"
+          mkdir sm && tar -xzf sourcemod.tar.gz -C sm
+          scripting=sm/addons/sourcemod/scripting
+          "$scripting/spcomp" -i "$scripting/include" -i smarchive/scripting/include -E \
+            smarchive/scripting/smarchive.sp -o smarchive.smx
+
+      - name: Pack
+        id: pack
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            label="$GITHUB_REF_NAME"
+          else
+            label="${GITHUB_SHA::7}"
+          fi
+
+          pack() {
+            local stage=$1 ext=$2 built=$3
+            mkdir -p "$stage/addons/sourcemod/extensions/x64"
+            strip --strip-debug -o "$stage/addons/sourcemod/extensions/$ext.ext.so" "$built/linux-x86/$ext.ext.so"
+            strip --strip-debug -o "$stage/addons/sourcemod/extensions/x64/$ext.ext.so" \
+              "$built/linux-x86_64/$ext.ext.so"
+          }
+
+          main=stage-main/addons/sourcemod
+          pack stage-main smarchive smarchive/build/smarchive.ext
+          mkdir -p "$main/plugins" "$main/scripting/include" "$main/licenses/smarchive"
+          cp smarchive.smx "$main/plugins/"
+          cp smarchive/scripting/smarchive.sp "$main/scripting/"
+          cp smarchive/scripting/include/smarchive.inc "$main/scripting/include/"
+          cp smarchive/LICENSE.txt smarchive/licenses/GPLv2.txt smarchive/licenses/GPLv3.txt "$main/licenses/smarchive/"
+          for port in libs/x86/share/*/copyright; do
+            cp "$port" "$main/licenses/smarchive/$(basename "$(dirname "$port")").txt"
+          done
+
+          shims=stage-shims/addons/sourcemod
+          pack stage-shims smbz2 smarchive/build/shims/smbz2.ext
+          pack stage-shims smbrotli smarchive/build/shims/smbrotli.ext
+          mkdir -p "$shims/scripting/include" "$shims/licenses/smarchive"
+          cp smarchive/scripting/shims/include/bzip2.inc smarchive/scripting/shims/include/brotli.inc \
+            "$shims/scripting/include/"
+          cp smarchive/LICENSE.txt "$shims/licenses/smarchive/"
+
+          tar -czf "sm-archive-$label-linux.tar.gz" -C stage-main addons
+          tar -czf "sm-archive-shims-$label-linux.tar.gz" -C stage-shims addons
+          echo "Contents:"
+          find stage-main stage-shims -type f | sort
+
+      - name: Upload archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: sm-archive-linux
+          path: sm-archive-*-linux.tar.gz
+          if-no-files-found: error
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check that the tag matches the extension version
+        run: |
+          tag="$GITHUB_REF_NAME"
+          version=$(sed -n 's/^#define SMARCHIVE_VERSION_STRING "\(.*\)"$/\1/p' extension/src/version.h)
+          if [ "$tag" != "v$version" ]; then
+            echo "::error::Tag $tag does not match version $version in extension/src/version.h"
+            exit 1
+          fi
+          echo "Version $version matches tag $tag"
+
+      - name: Download archives
+        uses: actions/download-artifact@v4
+        with:
+          path: archives
+          name: sm-archive-linux
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" archives/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag

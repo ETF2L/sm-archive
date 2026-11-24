@@ -1,0 +1,27 @@
+# Never tracked: Claude's working files, ADRs, deploy scripts and reports
+.claude/
+**/docs/adr/
+HANDOVER.md
+PLAN.md
+depl.sh
+depl.pl
+.cache/
+code-review-*.html
+architecture-*.html
+.spcomp-lsp.json
+
+# Test servers and their end-to-end tests
+/server/
+
+# Copyright 2026 ETF2L Contributors, Dave
+dist/
+dist-shims/
+depl.sh
+depl.pl
+# AMBuild build directory
+/build/
+# Library headers copied out of the build image for clangd (build.sh)
+extension/.libs/
+# Test files, created at run time
+server/artest/*
+!server/artest/.gitkeep

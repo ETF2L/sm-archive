@@ -1,0 +1,23 @@
+# vim: set sts=2 ts=8 sw=2 tw=99 et:
+# Copyright 2026 ETF2L Contributors, Dave
+#
+# The shims smbz2.ext and smbrotli.ext: the natives of SMbz2 and SMbrotli,
+# forwarded to smarchive through its internal interface. They link no
+# library; of the core only the path rules.
+import os
+
+shims_dir = os.path.join(builder.sourcePath, 'shims')
+core_dir = os.path.join(builder.sourcePath, 'src', 'core')
+
+for shim in ['smbz2', 'smbrotli']:
+  project = builder.LibraryProject(shim + '.ext')
+  shim_dir = os.path.join(shims_dir, shim)
+  project.sources += [os.path.join(shim_dir, name) for name in sorted(os.listdir(shim_dir)) if name.endswith('.cpp')]
+  project.sources += [os.path.join(shims_dir, 'shim.cpp'), os.path.join(core_dir, 'paths.cpp'),
+                      os.path.join(core_dir, 'status.cpp')]
+  for cxx in builder.targets:
+    binary = project.Configure(cxx, project.name, 'Release - {}'.format(cxx.target.arch))
+    # Its own smsdk_config.h, not the extension's.
+    binary.compiler.includes = [shim_dir, shims_dir, os.path.join(builder.sourcePath, 'src', 'api'), core_dir]
+    Extension.configure_extension(binary)
+  builder.Add(project)

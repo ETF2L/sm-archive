@@ -1,0 +1,21 @@
+{
+  "name": "smarchive",
+  "version-semver": "1.0.0",
+  "builtin-baseline": "93ad765c7b66ab9ce97469ec23a90b15c3a14ee5",
+  "dependencies": [
+    "zlib",
+    {
+      "name": "bzip2",
+      "default-features": false
+    },
+    "brotli",
+    "liblzma",
+    "zstd",
+    "lz4",
+    {
+      "name": "libarchive",
+      "default-features": false,
+      "features": ["bzip2", "lz4", "lzma", "zstd"]
+    }
+  ]
+}
