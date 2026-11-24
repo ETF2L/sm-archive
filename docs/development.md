@@ -2,22 +2,20 @@
 
 ## Building
 
-`./build.sh` builds everything in Docker and writes `dist/` (SMArchive) and `dist-shims/` (the shims), each laid out
-like `addons/sourcemod/`. It needs the repository's shared images `tf2-dev/ext-toolchain` and `tf2-dev/server`
-(`docker compose -f server/compose.yaml build` in the repository root) and copies the libraries' headers to
-`extension/.libs/include/` for clangd. The stages of `server/Dockerfile`:
+`.github/workflows/ci.yml` builds SMArchive on an Ubuntu 22.04 runner, and its `build` job is the reference for a
+local build:
 
-1. `libraries`: vcpkg at `VCPKG_COMMIT`, the commit `vcpkg/vcpkg.json` names as its `builtin-baseline`, builds the
-   libraries for both architectures into `/build/libs/x86` and `/build/libs/x64`.
-2. `extension-build`: AMBuild builds `smarchive.ext`, the shims and the unit tests; the tests run on the fixtures,
-   the real tools check our output, and the binaries are checked to export only `GetSMExtAPI` and need at most glibc
-   2.35.
-3. `plugin-build`: spcomp compiles the companion plugin and the test plugins.
-4. `dist`, `dist-shims`: the installed files.
-5. The last, unnamed stage: the test server, `tf2-dev/server` with SMArchive, the shims and the test plugins.
+1. vcpkg at the commit `vcpkg/vcpkg.json` names as its `builtin-baseline` builds the libraries for both architectures
+   with the triplets `x86-linux-smarchive` and `x64-linux-smarchive` into `libs/x86` and `libs/x64`, with vcpkg's
+   packages cached.
+2. AMBuild builds `smarchive.ext`, the shims and the unit tests with clang
+   (`extension/configure.py --targets=x86,x86_64 --sm-path=<sourcemod> --libs-path=<libs>`); the tests run on the
+   fixtures, the real tools check our output, and the binaries are checked to export only `GetSMExtAPI` and need at
+   most glibc 2.35.
+3. spcomp compiles the companion plugin.
+4. It packs two archives laid out like a game folder, SMArchive and the shims.
 
-`.github/workflows/ci.yml` runs the same steps on an Ubuntu 22.04 runner, with vcpkg's packages cached, and packs the
-release archives. It pins the SourceMod commit it builds against (`SOURCEMOD_COMMIT`, the one of the shared toolchain
+It pins the SourceMod commit it builds against (`SOURCEMOD_COMMIT`, the one of the shared toolchain
 image when it was set) and the SourceMod build whose spcomp compiles the plugin (`SOURCEMOD_DROP`); move both only on
 purpose, like the vcpkg baseline. It takes the vcpkg commit from `vcpkg/vcpkg.json`. A separate job, `lint`, checks
 the SourcePawn files in `scripting/` with pawncritic through sourcepawn-tools' SourcePawn Lint action

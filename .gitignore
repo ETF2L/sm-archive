@@ -5,6 +5,8 @@ HANDOVER.md
 PLAN.md
 depl.sh
 depl.pl
+build.sh
+CONTEXT.md
 .cache/
 code-review-*.html
 architecture-*.html
