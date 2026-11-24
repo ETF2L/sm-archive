@@ -19,7 +19,10 @@ like `addons/sourcemod/`. It needs the repository's shared images `tf2-dev/ext-t
 `.github/workflows/ci.yml` runs the same steps on an Ubuntu 22.04 runner, with vcpkg's packages cached, and packs the
 release archives. It pins the SourceMod commit it builds against (`SOURCEMOD_COMMIT`, the one of the shared toolchain
 image when it was set) and the SourceMod build whose spcomp compiles the plugin (`SOURCEMOD_DROP`); move both only on
-purpose, like the vcpkg baseline. It takes the vcpkg commit from `vcpkg/vcpkg.json`.
+purpose, like the vcpkg baseline. It takes the vcpkg commit from `vcpkg/vcpkg.json`. A separate job, `lint`, checks
+the SourcePawn files in `scripting/` with pawncritic through sourcepawn-tools' SourcePawn Lint action
+(`davenonymous/sourcepawn-tools@v0`) at its default severity 3 and fails on any violation; run
+`pawncritic scripting` before pushing.
 
 ## Tests
 

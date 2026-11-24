@@ -5,9 +5,11 @@
 #include "check.h"
 #include "pool.h"
 
+#include <algorithm>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
+#include <set>
 #include <thread>
 
 using namespace smarchive;
@@ -66,6 +68,13 @@ Job FakeJob(JobId id)
 	return Job{ListJob{std::string(id, 'x'), ArchiveChoice{}}, kDefaultLimits};
 }
 
+/* Jobs started together on different threads record their starts in any
+ * order, so the first count starts are compared as a set. */
+std::set<JobId> FirstStarts(const std::vector<JobId> &starts, size_t count)
+{
+	return std::set<JobId>(starts.begin(), starts.begin() + std::min(count, starts.size()));
+}
+
 std::vector<FinishedJob> WaitForFinished(Pool &pool, size_t count)
 {
 	std::vector<FinishedJob> finished;
@@ -119,7 +128,9 @@ TEST(PoolRunsJobsInParallel)
 	std::this_thread::sleep_for(50ms);
 	CHECK(runner.WaitForStarts(2).size() == 2);
 	runner.Release(2);
-	CHECK(runner.WaitForStarts(3) == (std::vector<JobId>{1, 2, 3}));
+	std::vector<JobId> starts = runner.WaitForStarts(3);
+	CHECK(FirstStarts(starts, 2) == (std::set<JobId>{1, 2}));
+	CHECK(starts.size() == 3 && starts[2] == 3);
 	runner.Release(1);
 	runner.Release(3);
 	std::vector<FinishedJob> finished = WaitForFinished(pool, 3);
@@ -136,9 +147,10 @@ TEST(PoolKeepsLanesSerial)
 	pool.Submit(1, FakeJob(1), 9, Priority::Normal, std::make_shared<Progress>());
 	pool.Submit(2, FakeJob(2), 9, Priority::High, std::make_shared<Progress>());
 	pool.Submit(3, FakeJob(3), kNoLane, Priority::Normal, std::make_shared<Progress>());
-	CHECK(runner.WaitForStarts(2) == (std::vector<JobId>{1, 3}));
+	CHECK(FirstStarts(runner.WaitForStarts(2), 2) == (std::set<JobId>{1, 3}));
 	runner.Release(1);
-	CHECK(runner.WaitForStarts(3) == (std::vector<JobId>{1, 3, 2}));
+	std::vector<JobId> starts = runner.WaitForStarts(3);
+	CHECK(starts.size() == 3 && starts[2] == 2);
 	runner.Release(2);
 	runner.Release(3);
 	CHECK(WaitForFinished(pool, 3).size() == 3);

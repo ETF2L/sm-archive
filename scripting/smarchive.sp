@@ -93,8 +93,8 @@ Action Command_Versions(int client, int args) {
 
 void PrintReport(int client, SMArchiveReport report) {
 	int lines = SMArchive_TakeReport(report);
-	char line[512];
 	for (int i = 0; i < lines; i++) {
+		char line[512];
 		SMArchive_GetReportLine(i, line, sizeof(line));
 		ReplyToCommand(client, "%s", line);
 	}

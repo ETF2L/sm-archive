@@ -9,7 +9,8 @@
 # laid out like a game folder, SMArchive and the shims. For a pushed v* tag
 # it also publishes them as a GitHub release, after checking that the tag
 # matches the version in extension/src/version.h. The steps follow
-# server/Dockerfile.
+# server/Dockerfile. A separate job checks the SourcePawn files in scripting/
+# with pawncritic (sourcepawn-tools' SourcePawn Lint action).
 
 name: CI
 
@@ -28,6 +29,19 @@ env:
   MAX_GLIBC: '2.35'
 
 jobs:
+  lint:
+    name: Lint (SourcePawn)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run pawncritic
+        uses: davenonymous/sourcepawn-tools@v0
+        with:
+          paths: scripting
+
   build:
     name: Build (linux)
     runs-on: ubuntu-22.04

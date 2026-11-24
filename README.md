@@ -115,6 +115,7 @@ game directory, as for SourceMod's own file functions.
 - [Examples](docs/examples.md): short examples of the common tasks.
 - [Migration](docs/migration.md): from SMbz2 and SMbrotli, with the shims or to the new API.
 - [Development](docs/development.md): building, the tests, the source layout, updating the libraries, releasing.
+  CI also checks the SourcePawn code with [pawncritic](https://github.com/davenonymous/sourcepawn-tools).
 
 ## AI disclosure
 
