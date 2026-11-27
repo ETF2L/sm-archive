@@ -962,12 +962,16 @@ any g_progressData;
 int g_progressInputSize;
 
 public void Test_ProgressIsReportedWhileAJobRuns() {
-	int block[4096];
-	for (int i = 0; i < sizeof(block); i++) {
-		block[i] = (i * 7919 + i / 13) & 0xFF;
-	}
+	/* Pseudo-random bytes, which xz cannot shrink much: compressing them takes
+	 * seconds, long enough for progress at its pace of at most 4 a second. */
 	File file = OpenFile("cfg/big.bin", "wb");
+	int state = 12345;
+	int block[4096];
 	for (int i = 0; i < 2048; i++) {
+		for (int j = 0; j < sizeof(block); j++) {
+			state = state * 1103515245 + 12345;
+			block[j] = (state >> 16) & 0xFF;
+		}
 		file.Write(block, sizeof(block), 1);
 	}
 	delete file;
