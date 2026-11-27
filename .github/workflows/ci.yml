@@ -6,11 +6,13 @@
 # the unit tests on the hostile, RAR and interop fixtures for both
 # architectures, the interop check with the real tools, and the companion
 # plugin with the spcomp of a pinned SourceMod build. It packs two archives
-# laid out like a game folder, SMArchive and the shims. For a pushed v* tag
-# it also publishes them as a GitHub release, after checking that the tag
-# matches the version in extension/src/version.h. A separate job checks the
-# SourcePawn files in scripting/ with pawncritic (sourcepawn-tools' SourcePawn
-# Lint action).
+# laid out like a game folder, SMArchive and the shims, and runs the
+# SourcePawn tests (tests/) against the packed extension and companion plugin
+# under smrunner (sm-runner's setup and test actions), with both runners. For
+# a pushed v* tag it also publishes the archives as a GitHub release, after
+# checking that the tag matches the version in extension/src/version.h. A
+# separate job checks the SourcePawn files in scripting/ and tests/ with
+# pawncritic and pawntidy --check (sourcepawn-tools' SourcePawn Lint action).
 
 name: CI
 
@@ -37,10 +39,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run pawncritic
+      - name: Run pawncritic and pawntidy
         uses: davenonymous/sourcepawn-tools@v0
         with:
-          paths: scripting
+          paths: |
+            scripting
+            tests
+          tidy: true
 
   build:
     name: Build (linux)
@@ -193,6 +198,28 @@ jobs:
           tar -czf "sm-archive-shims-$label-linux.tar.gz" -C stage-shims addons
           echo "Contents:"
           find stage-main stage-shims -type f | sort
+
+      - name: Set up smrunner
+        uses: davenonymous/sm-runner/setup@v0
+        with:
+          spcomp: true
+
+      - name: Run the SourcePawn tests
+        uses: davenonymous/sm-runner/test@v0
+        with:
+          working-directory: smarchive
+          tests: tests/test_smarchive.sp
+          include-paths: scripting/include
+          extensions: ${{ github.workspace }}/stage-main/addons/sourcemod/extensions
+
+      - name: Run the companion plugin's tests
+        uses: davenonymous/sm-runner/test@v0
+        with:
+          working-directory: smarchive
+          tests: tests/test_companion.sp
+          plugins: ${{ github.workspace }}/stage-main/addons/sourcemod/plugins/smarchive.smx
+          include-paths: scripting/include
+          extensions: ${{ github.workspace }}/stage-main/addons/sourcemod/extensions
 
       - name: Upload archives
         uses: actions/upload-artifact@v4

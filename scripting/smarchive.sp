@@ -40,13 +40,16 @@ ConVar g_maxMemory;
 public void OnPluginStart() {
 	g_threads = CreateConVar("sm_archive_threads", "2", "Worker threads that run the jobs", _, true, 1.0, true, 8.0);
 	g_maxSize = CreateConVar("sm_archive_max_size", "1024",
-		"Default limit of the bytes one job unpacks, in MiB (0: no limit)", _, true, 0.0, true, 2097151.0);
+	                         "Default limit of the bytes one job unpacks, in MiB (0: no limit)", _, true, 0.0, true,
+	                         2097151.0);
 	g_maxEntries = CreateConVar("sm_archive_max_entries", "10000",
-		"Default limit of the entries of an archive (0: no limit)", _, true, 0.0);
+	                            "Default limit of the entries of an archive (0: no limit)", _, true, 0.0);
 	g_maxRatio = CreateConVar("sm_archive_max_ratio", "1000",
-		"Default limit of the bytes unpacked per byte read, once more than 16 MiB were unpacked (0: no limit)", _, true, 0.0);
+	                          "Default limit of the bytes unpacked per byte read, once more than 16 MiB were unpacked (0: no limit)",
+	                          _, true, 0.0);
 	g_maxMemory = CreateConVar("sm_archive_max_memory", "64",
-		"Default limit of the output one job keeps in memory, in MiB (0: no limit)", _, true, 0.0, true, 2097151.0);
+	                           "Default limit of the output one job keeps in memory, in MiB (0: no limit)", _, true,
+	                           0.0, true, 2097151.0);
 	AutoExecConfig(true, "smarchive");
 
 	g_threads.AddChangeHook(OnThreadsChanged);
@@ -57,7 +60,7 @@ public void OnPluginStart() {
 
 	RegAdminCmd("sm_archive_status", Command_Status, ADMFLAG_CONFIG, "Shows the queued and running archive jobs");
 	RegAdminCmd("sm_archive_versions", Command_Versions, ADMFLAG_CONFIG,
-		"Shows the versions of SMArchive and its libraries");
+	            "Shows the versions of SMArchive and its libraries");
 }
 
 public void OnConfigsExecuted() {

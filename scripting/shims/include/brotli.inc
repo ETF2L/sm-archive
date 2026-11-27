@@ -58,7 +58,7 @@ enum BrotliError {
 	BrotliError_FormatDistance = -16,
 	BrotliError_FormatPadding2 = -15,
 	BrotliError_FormatPadding1 = -14,
-	BrotliError_FormatWindowBits = -13,     /**< Also a large-window stream, which is not supported */
+	BrotliError_FormatWindowBits = -13, /**< Also a large-window stream, which is not supported */
 	BrotliError_FormatDictionary = -12,
 	BrotliError_FormatTransform = -11,
 	BrotliError_FormatBlockLength2 = -10,
@@ -72,17 +72,17 @@ enum BrotliError {
 	BrotliError_FormatReserved = -2,
 	BrotliError_FormatExuberantNibble = -1,
 
-	BrotliError_None = 0,                   /**< Success, outFile is complete */
-	BrotliError_OpenInput,                  /**< inFile could not be opened, e.g. it does not exist */
-	BrotliError_OpenOutput,                 /**< "<outFile>.tmp" could not be created, e.g. its directory does not exist */
-	BrotliError_OutputExists,               /**< outFile exists and overwrite was false */
-	BrotliError_CreatePath,                 /**< outFile's directory could not be created */
-	BrotliError_Read,                       /**< Reading inFile failed */
-	BrotliError_Write,                      /**< Writing "<outFile>.tmp" failed, e.g. the disk is full */
-	BrotliError_UnexpectedEOF,              /**< Decompression: inFile ends in the middle of the stream, or is empty */
-	BrotliError_TrailingData,               /**< Decompression: inFile has data after the end of its stream */
-	BrotliError_Memory,                     /**< The encoder or decoder could not allocate its memory */
-	BrotliError_Rename,                     /**< "<outFile>.tmp" could not be renamed onto outFile */
+	BrotliError_None = 0,      /**< Success, outFile is complete */
+	BrotliError_OpenInput,     /**< inFile could not be opened, e.g. it does not exist */
+	BrotliError_OpenOutput,    /**< "<outFile>.tmp" could not be created, e.g. its directory does not exist */
+	BrotliError_OutputExists,  /**< outFile exists and overwrite was false */
+	BrotliError_CreatePath,    /**< outFile's directory could not be created */
+	BrotliError_Read,          /**< Reading inFile failed */
+	BrotliError_Write,         /**< Writing "<outFile>.tmp" failed, e.g. the disk is full */
+	BrotliError_UnexpectedEOF, /**< Decompression: inFile ends in the middle of the stream, or is empty */
+	BrotliError_TrailingData,  /**< Decompression: inFile has data after the end of its stream */
+	BrotliError_Memory,        /**< The encoder or decoder could not allocate its memory */
+	BrotliError_Rename,        /**< "<outFile>.tmp" could not be renamed onto outFile */
 
 	/* The decoder reached a state brotli considers impossible. */
 	BrotliError_Unreachable = -31
@@ -94,9 +94,9 @@ enum BrotliError {
  * compresses.
  */
 enum BrotliMode {
-	BrotliMode_Generic = 0,                 /**< Any data, the default */
-	BrotliMode_Text,                        /**< UTF-8 text, such as logs and configs */
-	BrotliMode_Font                         /**< WOFF 2.0 fonts */
+	BrotliMode_Generic = 0, /**< Any data, the default */
+	BrotliMode_Text,        /**< UTF-8 text, such as logs and configs */
+	BrotliMode_Font         /**< WOFF 2.0 fonts */
 };
 
 /**
