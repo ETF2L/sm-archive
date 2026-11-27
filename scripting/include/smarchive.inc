@@ -55,51 +55,51 @@
  * output was written (an existing one is unchanged).
  */
 enum ArchiveError {
-	ArchiveError_None = 0,       /**< Success */
-	ArchiveError_OpenInput,      /**< The input could not be opened, e.g. it does not exist */
-	ArchiveError_OpenOutput,     /**< The temp file could not be created, e.g. its directory does not exist */
-	ArchiveError_OutputExists,   /**< outFile exists and overwrite was false, or targetDir exists */
-	ArchiveError_CreatePath,     /**< A directory could not be created */
-	ArchiveError_Read,           /**< Reading the input failed */
-	ArchiveError_Write,          /**< Writing failed, e.g. the disk is full */
-	ArchiveError_Rename,         /**< The temp file or staging directory could not be renamed onto the output */
-	ArchiveError_Memory,         /**< A library ran out of memory */
-	ArchiveError_Corrupt,        /**< The data is corrupt, or not of the format given */
-	ArchiveError_UnexpectedEOF,  /**< The input ends in the middle of a stream, or is empty */
-	ArchiveError_TrailingData,   /**< Data that is no further stream follows the compressed stream */
-	ArchiveError_UnknownFormat,  /**< Auto could not tell the input's format */
-	ArchiveError_Unsupported,    /**< The input uses a feature that is not supported, or ReadEntry's entry is no regular file */
-	ArchiveError_Encrypted,      /**< The archive or an entry is encrypted */
-	ArchiveError_EntryName,      /**< An entry's name is not valid UTF-8 (Create: or has "\") */
-	ArchiveError_UnsafeEntry,    /**< An entry is absolute, contains "..", comes twice or collides with another */
-	ArchiveError_LimitSize,      /**< Unpacking exceeded ArchiveLimits.MaxSize */
-	ArchiveError_LimitEntries,   /**< The archive has more entries than ArchiveLimits.MaxEntries */
-	ArchiveError_LimitRatio,     /**< Unpacking exceeded ArchiveLimits.MaxRatio */
-	ArchiveError_LimitMemory,    /**< Output in memory exceeded ArchiveLimits.MaxMemory */
-	ArchiveError_EntryNotFound,  /**< ReadEntry: the archive has no such entry */
-	ArchiveError_Cancelled,      /**< The job was cancelled with Compression.Cancel */
-	ArchiveError_Internal        /**< A bug in SMArchive or a library; please report it */
+	ArchiveError_None = 0, /**< Success */
+	ArchiveError_OpenInput, /**< The input could not be opened, e.g. it does not exist */
+	ArchiveError_OpenOutput, /**< The temp file could not be created, e.g. its directory does not exist */
+	ArchiveError_OutputExists, /**< outFile exists and overwrite was false, or targetDir exists */
+	ArchiveError_CreatePath, /**< A directory could not be created */
+	ArchiveError_Read, /**< Reading the input failed */
+	ArchiveError_Write, /**< Writing failed, e.g. the disk is full */
+	ArchiveError_Rename, /**< The temp file or staging directory could not be renamed onto the output */
+	ArchiveError_Memory, /**< A library ran out of memory */
+	ArchiveError_Corrupt, /**< The data is corrupt, or not of the format given */
+	ArchiveError_UnexpectedEOF, /**< The input ends in the middle of a stream, or is empty */
+	ArchiveError_TrailingData, /**< Data that is no further stream follows the compressed stream */
+	ArchiveError_UnknownFormat, /**< Auto could not tell the input's format */
+	ArchiveError_Unsupported, /**< The input uses a feature that is not supported, or ReadEntry's entry is no regular file */
+	ArchiveError_Encrypted, /**< The archive or an entry is encrypted */
+	ArchiveError_EntryName, /**< An entry's name is not valid UTF-8 (Create: or has "\") */
+	ArchiveError_UnsafeEntry, /**< An entry is absolute, contains "..", comes twice or collides with another */
+	ArchiveError_LimitSize, /**< Unpacking exceeded ArchiveLimits.MaxSize */
+	ArchiveError_LimitEntries, /**< The archive has more entries than ArchiveLimits.MaxEntries */
+	ArchiveError_LimitRatio, /**< Unpacking exceeded ArchiveLimits.MaxRatio */
+	ArchiveError_LimitMemory, /**< Output in memory exceeded ArchiveLimits.MaxMemory */
+	ArchiveError_EntryNotFound, /**< ReadEntry: the archive has no such entry */
+	ArchiveError_Cancelled, /**< The job was cancelled with Compression.Cancel */
+	ArchiveError_Internal /**< A bug in SMArchive or a library; please report it */
 };
 
 /** A stream codec. */
 enum CodecFormat {
-	CodecFormat_Auto = 0,  /**< Decompressing: tell it by its magic bytes, brotli (".br") by the name */
-	CodecFormat_None,      /**< A tar: plain, not compressed */
-	CodecFormat_Gzip,      /**< .gz */
-	CodecFormat_Bzip2,     /**< .bz2 */
-	CodecFormat_Brotli,    /**< .br */
-	CodecFormat_Xz,        /**< .xz */
-	CodecFormat_Zstd,      /**< .zst */
-	CodecFormat_Lz4        /**< .lz4 (the lz4 frame format) */
+	CodecFormat_Auto = 0, /**< Decompressing: tell it by its magic bytes, brotli (".br") by the name */
+	CodecFormat_None,     /**< A tar: plain, not compressed */
+	CodecFormat_Gzip,     /**< .gz */
+	CodecFormat_Bzip2,    /**< .bz2 */
+	CodecFormat_Brotli,   /**< .br */
+	CodecFormat_Xz,       /**< .xz */
+	CodecFormat_Zstd,     /**< .zst */
+	CodecFormat_Lz4       /**< .lz4 (the lz4 frame format) */
 };
 
 /** A container. */
 enum ArchiveFormat {
-	ArchiveFormat_Auto = 0,  /**< Tell it by its magic bytes (zip, 7z, RAR, tar) or the name (.tar, .tgz, ...) */
-	ArchiveFormat_Tar,       /**< tar, plain or through a codec (.tar.gz, .tar.xz, ...) */
+	ArchiveFormat_Auto = 0, /**< Tell it by its magic bytes (zip, 7z, RAR, tar) or the name (.tar, .tgz, ...) */
+	ArchiveFormat_Tar,      /**< tar, plain or through a codec (.tar.gz, .tar.xz, ...) */
 	ArchiveFormat_Zip,
-	ArchiveFormat_SevenZip,  /**< 7z */
-	ArchiveFormat_Rar        /**< RAR 4 and 5, read only */
+	ArchiveFormat_SevenZip, /**< 7z */
+	ArchiveFormat_Rar       /**< RAR 4 and 5, read only */
 };
 
 enum ArchiveEntryType {
@@ -107,7 +107,7 @@ enum ArchiveEntryType {
 	ArchiveEntry_Directory,
 	ArchiveEntry_Symlink,
 	ArchiveEntry_Hardlink,
-	ArchiveEntry_Other       /**< A device, FIFO or socket */
+	ArchiveEntry_Other /**< A device, FIFO or socket */
 };
 
 /** Why an entry was not written. */
@@ -127,8 +127,8 @@ enum ArchivePriority {
 /** How brotli treats its input. */
 enum BrotliContent {
 	BrotliContent_Generic = 0,
-	BrotliContent_Text,        /**< UTF-8 text */
-	BrotliContent_Font         /**< WOFF 2.0 fonts */
+	BrotliContent_Text, /**< UTF-8 text */
+	BrotliContent_Font  /**< WOFF 2.0 fonts */
 };
 
 /** The integrity check xz stores. */
@@ -150,7 +150,7 @@ enum Lz4BlockSize {
 /** How zip entries are compressed. */
 enum ZipMethod {
 	ZipMethod_Store = 0,
-	ZipMethod_Deflate,  /**< What every zip tool reads */
+	ZipMethod_Deflate, /**< What every zip tool reads */
 	ZipMethod_Bzip2,
 	ZipMethod_Lzma,
 	ZipMethod_Xz,
@@ -163,7 +163,7 @@ enum SevenZipMethod {
 	SevenZipMethod_Deflate,
 	SevenZipMethod_Bzip2,
 	SevenZipMethod_Lzma1,
-	SevenZipMethod_Lzma2,  /**< 7-Zip's default */
+	SevenZipMethod_Lzma2, /**< 7-Zip's default */
 	SevenZipMethod_Ppmd
 };
 
@@ -573,7 +573,8 @@ typedef ArchiveCallback = function void (ArchiveError error, ArchiveResult resul
  * @param inputSize     The input's size, -1 while unknown.
  * @param data          The data passed when the job was queued.
  */
-typedef ArchiveProgress = function void (int job, int bytesRead, int bytesWritten, int entries, int inputSize, any data);
+typedef ArchiveProgress = function void (int job, int bytesRead, int bytesWritten, int entries, int inputSize,
+                                         any data);
 
 /**
  * Compressing and decompressing files and memory, and the jobs.

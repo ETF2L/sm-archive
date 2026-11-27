@@ -14,13 +14,17 @@ local build:
    most glibc 2.35.
 3. spcomp compiles the companion plugin.
 4. It packs two archives laid out like a game folder, SMArchive and the shims.
+5. sm-runner's setup and test actions (`davenonymous/sm-runner/setup@v0` and `test@v0`) run the SourcePawn tests
+   against the packed extension and companion plugin, with both `smrunner` and `smrunner64`. A failing test fails the
+   job, so no release is published.
 
 It pins the SourceMod commit it builds against (`SOURCEMOD_COMMIT`, the one of the shared toolchain
 image when it was set) and the SourceMod build whose spcomp compiles the plugin (`SOURCEMOD_DROP`); move both only on
 purpose, like the vcpkg baseline. It takes the vcpkg commit from `vcpkg/vcpkg.json`. A separate job, `lint`, checks
-the SourcePawn files in `scripting/` with pawncritic through sourcepawn-tools' SourcePawn Lint action
-(`davenonymous/sourcepawn-tools@v0`) at its default severity 3 and fails on any violation; run
-`pawncritic scripting` before pushing.
+the SourcePawn files in `scripting/` and `tests/` with pawncritic and `pawntidy --check` through sourcepawn-tools'
+SourcePawn Lint action (`davenonymous/sourcepawn-tools@v0`), pawncritic at its default severity 3, and fails on any
+violation or file pawntidy would change; run `pawncritic scripting tests` and `pawntidy --check scripting tests`
+before pushing.
 
 ## Tests
 
@@ -37,6 +41,26 @@ with a fake `Pool::Runner`. Given a fixtures directory (`smarchive-tests-<arch> 
   encrypted zips and 7z; the tests unpack them and pack the same into `ours/<bits>/`, which `interop.py verify`
   unpacks with the tools.
 
+The SourcePawn tests (`tests/`) run under [sm-runner](https://github.com/davenonymous/sm-runner)'s smrunner, a
+simulated server, against the built extension:
+
+- `tests/test_smarchive.sp`: every native as a plugin calls it: the options and their ranges, every codec and
+  container through files and memory, the output rules (no output and no temp file after a failure, `overwrite`,
+  `createPath`), the checks of extraction on hand-made hostile tars, the limits, the jobs (callbacks on a later frame,
+  ids, serial lanes, cancellation, progress) and the documented native errors.
+- `tests/test_companion.sp`: the companion plugin's cvars, their config file, how their values reach the extension,
+  and `sm_archive_status` and `sm_archive_versions` with their admin flag.
+
+Compile them with `scripting/include` and smrunner's `share/include` on the include path, then run them against an
+extension folder laid out like `addons/sourcemod/extensions` (the packed archive's):
+
+```
+smrunner test test_smarchive.smx --extensions <dist>/extensions
+smrunner test test_companion.smx --extensions <dist>/extensions --plugin smarchive.smx
+```
+
+`smrunner` loads the x86 extension, `smrunner64` the x64 one.
+
 ## Layout
 
 | Path | What |
@@ -46,6 +70,7 @@ with a fake `Pool::Runner`. Given a fixtures directory (`smarchive-tests-<arch> 
 | `extension/src/api/smarchive_api.h` | The internal interface of the shims. |
 | `extension/shims/` | `shim.*` and one directory per shim. |
 | `extension/tests/` | The unit tests and fixtures. |
+| `tests/` | The SourcePawn tests for smrunner. |
 | `vcpkg/` | The manifest, the overlay port `zlib` (zlib-ng in its zlib-compatible mode) and the triplets. |
 | `scripting/` | `smarchive.inc`, the companion plugin, the shims' includes. |
 
